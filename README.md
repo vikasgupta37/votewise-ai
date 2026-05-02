@@ -1,8 +1,28 @@
-# 🗳️ VoteWise AI
+<div align="center">
 
-VoteWise AI is an interactive civic education platform designed to help users understand the Indian election system in a simple, engaging, and educational way.
+<h1>🗳️ VoteWise AI</h1>
+<h3>AI-Powered Indian Election Learning Platform 🇮🇳</h3>
 
-The platform combines AI-powered conversations, quizzes, flashcards, polling simulations, and multilingual support to improve election literacy and democratic awareness in India.
+<p>
+  VoteWise AI is an interactive civic education platform designed to help users understand the Indian election system in a simple, engaging, and educational way.<br/>
+  The platform combines AI-powered conversations, quizzes, flashcards, polling simulations, and multilingual support to improve election literacy and democratic awareness in India.
+</p>
+
+<br />
+
+<p align="center">
+  <a href="#">
+    <img src="https://img.shields.io/badge/🚀_Live_Demo-2563EB?style=for-the-badge&logoColor=white" alt="Live Demo" />
+  </a>
+  &nbsp;&nbsp;
+  <a href="https://github.com/vikasgupta37/votewise-ai">
+    <img src="https://img.shields.io/badge/📂_View_Project-181717?style=for-the-badge&logo=github&logoColor=white" alt="View Project" />
+  </a>
+</p>
+
+</div>
+
+---
 
 # ✨ Features
 
