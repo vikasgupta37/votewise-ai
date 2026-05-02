@@ -58,7 +58,14 @@ function SimulationView({ addXP }) {
       <p style={{ color: 'var(--text-secondary)' }}>Experience the step-by-step process inside an Indian polling booth.</p>
 
       {/* Progress Bar */}
-      <div style={{ display: 'flex', gap: '5px', marginBottom: '10px' }}>
+      <div 
+        style={{ display: 'flex', gap: '5px', marginBottom: '10px' }} 
+        role="progressbar" 
+        aria-valuemin="0" 
+        aria-valuemax={SIMULATION_STEPS.length} 
+        aria-valuenow={currentStep}
+        aria-label="Simulation Progress"
+      >
         {SIMULATION_STEPS.map((_, idx) => (
           <div key={idx} style={{ 
             height: '6px', 
@@ -66,7 +73,7 @@ function SimulationView({ addXP }) {
             borderRadius: '3px',
             backgroundColor: idx <= currentStep && currentStep < SIMULATION_STEPS.length ? 'var(--primary)' : 'var(--border-color)',
             transition: 'background-color 0.3s'
-          }} />
+          }} aria-hidden="true" />
         ))}
       </div>
 
@@ -77,6 +84,8 @@ function SimulationView({ addXP }) {
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -50 }}
+            role="region"
+            aria-live="polite"
             style={{ 
               background: 'var(--surface-color)', 
               padding: '30px', 
@@ -90,7 +99,10 @@ function SimulationView({ addXP }) {
               gap: '20px'
             }}
           >
-            <div style={{ color: 'var(--primary)', padding: '15px', background: 'var(--bg-color)', borderRadius: '50%' }}>
+            <div 
+              style={{ color: 'var(--primary)', padding: '15px', background: 'var(--bg-color)', borderRadius: '50%' }}
+              aria-hidden="true"
+            >
               {SIMULATION_STEPS[currentStep].icon}
             </div>
             
@@ -101,6 +113,7 @@ function SimulationView({ addXP }) {
 
             <button 
               onClick={handleNextStep}
+              aria-label={`Action: ${SIMULATION_STEPS[currentStep].action}`}
               style={{ 
                 marginTop: '10px',
                 padding: '12px 24px', 
@@ -119,7 +132,7 @@ function SimulationView({ addXP }) {
               onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
               onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
             >
-              {SIMULATION_STEPS[currentStep].action} <ChevronRight size={18} />
+              {SIMULATION_STEPS[currentStep].action} <ChevronRight size={18} aria-hidden="true" />
             </button>
           </motion.div>
         ) : (

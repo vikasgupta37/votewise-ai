@@ -1,118 +1,138 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User } from 'lucide-react';
+import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
+import { Send, Bot, User, Loader2 } from 'lucide-react';
 import '../components/Chat.css';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { getGeminiResponse } from '../services/gemini';
+import { QUICK_CHAT_ACTIONS } from '../constants';
 
-const QUICK_ACTIONS = [
-  'What is an EVM?',
-  'How do I register to vote?',
-  'What is NOTA?',
-];
+const INITIAL_MESSAGE = {
+  role: 'bot',
+  content: "Namaste! 🙏 I am VoteWise AI, your guide to Indian Elections. Ask me anything about EVMs, voter registration, constitutional articles, or the electoral process!",
+};
+
+// Memoized individual message component for performance
+const Message = memo(({ msg }) => (
+  <motion.div
+    className={`message ${msg.role}`}
+    initial={{ opacity: 0, x: msg.role === 'bot' ? -20 : 20 }}
+    animate={{ opacity: 1, x: 0 }}
+    transition={{ duration: 0.3 }}
+  >
+    <div className="avatar" aria-hidden="true">
+      {msg.role === 'bot' ? <Bot size={24} /> : <User size={24} />}
+    </div>
+    <div className="message-content">
+      <span className="sr-only">{msg.role === 'bot' ? 'Assistant: ' : 'You: '}</span>
+      {msg.content}
+    </div>
+  </motion.div>
+));
+Message.displayName = 'Message';
+
+// Memoized quick action button for performance
+const QuickActionButton = memo(({ action, onSelect }) => (
+  <button
+    className="action-btn"
+    onClick={() => onSelect(action)}
+    aria-label={`Ask about: ${action}`}
+  >
+    {action}
+  </button>
+));
+QuickActionButton.displayName = 'QuickActionButton';
 
 function ChatBotView({ currentLanguage, currentMode }) {
-  const [messages, setMessages] = useState([
-    {
-      role: 'bot',
-      content: "Namaste! I am VoteWise AI. I'm ready to help you learn about Indian Elections. Ask me anything!",
-    },
-  ]);
+  const [messages, setMessages] = useState([INITIAL_MESSAGE]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [charCount, setCharCount] = useState(0);
   const messagesEndRef = useRef(null);
+  const MAX_CHARS = 500;
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isTyping]);
+  }, [messages, isTyping, scrollToBottom]);
 
   useEffect(() => {
-    // Add greeting when language or mode changes
     const greetings = {
-      'English': `Mode: ${currentMode}. How can I help you?`,
-      'Hindi': `मोड: ${currentMode}. मैं आपकी कैसे मदद कर सकता हूँ?`,
-      'Telugu': `మోడ్: ${currentMode}. నేను మీకు ఎలా సహాయం చేయగలను?`,
-      'Tamil': `முறை: ${currentMode}. நான் உங்களுக்கு எப்படி உதவ முடியும்?`
+      English: `Language changed to ${currentLanguage}, Mode: ${currentMode}. How can I help you?`,
+      Hindi: `भाषा ${currentLanguage} में बदल गई, मोड: ${currentMode}. मैं आपकी कैसे मदद कर सकता हूँ?`,
+      Telugu: `భాష ${currentLanguage}కి మారింది, మోడ్: ${currentMode}. నేను మీకు ఎలా సహాయం చేయగలను?`,
+      Tamil: `மொழி ${currentLanguage}க்கு மாறியது, முறை: ${currentMode}. நான் உங்களுக்கு எப்படி உதவ முடியும்?`,
     };
-    
-    setMessages(prev => [...prev, {
-      role: 'bot',
-      content: greetings[currentLanguage] || greetings['English']
-    }]);
+    setMessages(prev => [
+      ...prev,
+      { role: 'bot', content: greetings[currentLanguage] || greetings['English'] },
+    ]);
   }, [currentLanguage, currentMode]);
 
-  const generateBotResponse = (userInput) => {
-    const lowerInput = userInput.toLowerCase();
-    
-    let prefix = "";
-    if (currentLanguage === "Hindi") prefix = "[Hindi Translation Simulated]\n";
-    if (currentLanguage === "Telugu") prefix = "[Telugu Translation Simulated]\n";
-    if (currentLanguage === "Tamil") prefix = "[Tamil Translation Simulated]\n";
-    
-    let detailLevelText = "";
-    if (currentMode === "Student") detailLevelText = " Imagine you are explaining this in a classroom: ";
-    if (currentMode === "Exam") detailLevelText = " (Key Facts for UPSC: Article 324, 1951 RP Act): ";
-    if (currentMode === "First Voter") detailLevelText = " As a first time voter, here is a simple guide: ";
+  const handleInputChange = useCallback((e) => {
+    const val = e.target.value;
+    if (val.length <= MAX_CHARS) {
+      setInput(val);
+      setCharCount(val.length);
+    }
+  }, []);
 
-    if (lowerInput.includes('evm')) {
-      return prefix + detailLevelText + "An Electronic Voting Machine (EVM) is a simple electronic device used to record votes in place of ballot papers and boxes.";
-    }
-    if (lowerInput.includes('register') || lowerInput.includes('voter id')) {
-      return prefix + detailLevelText + "To register to vote in India, you must be 18 years old. Fill Form 6 on the Election Commission's portal at voters.eci.gov.in.";
-    }
-    if (lowerInput.includes('nota')) {
-      return prefix + detailLevelText + "NOTA stands for 'None of the Above'. Introduced after the PUCL v. Union of India case (2013), it allows voters to express their dissatisfaction.";
-    }
-    
-    return prefix + detailLevelText + "That's a great question about the Indian election process! Ask me about EVMs, NOTA, or how to register to vote!";
-  };
+  const handleQuickAction = useCallback((action) => {
+    setInput(action);
+    setCharCount(action.length);
+  }, []);
 
-  const handleSend = (e) => {
+  const handleSend = useCallback(async (e) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || isTyping) return;
 
     const userMessage = { role: 'user', content: input.trim() };
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages(prev => [...prev, userMessage]);
     setInput('');
+    setCharCount(0);
     setIsTyping(true);
 
-    setTimeout(() => {
-      const botResponse = generateBotResponse(userMessage.content);
-      setMessages((prev) => [...prev, { role: 'bot', content: botResponse }]);
+    try {
+      const botResponse = await getGeminiResponse(userMessage.content, currentMode, currentLanguage);
+      setMessages(prev => [...prev, { role: 'bot', content: botResponse }]);
+    } catch {
+      setMessages(prev => [
+        ...prev,
+        { role: 'bot', content: 'Sorry, I encountered an error. Please try again.' },
+      ]);
+    } finally {
       setIsTyping(false);
-    }, 1000);
-  };
+    }
+  }, [input, isTyping, currentMode, currentLanguage]);
 
   return (
-    <motion.div 
+    <motion.div
       className="chat-container"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
+      role="main"
+      aria-label="AI Civic Assistant Chat"
     >
-      <div className="messages-area">
-        {messages.map((msg, index) => (
-          <div key={index} className={`message ${msg.role}`}>
-            <div className="avatar">
-              {msg.role === 'bot' ? <Bot size={24} /> : <User size={24} />}
-            </div>
-            <div className="message-content">
-              {msg.content}
-            </div>
-          </div>
-        ))}
+      <div className="messages-area" role="log" aria-live="polite" aria-label="Chat conversation">
+        <AnimatePresence initial={false}>
+          {messages.map((msg, index) => (
+            <Message key={index} msg={msg} />
+          ))}
+        </AnimatePresence>
+
         {isTyping && (
-          <div className="message bot">
-            <div className="avatar">
+          <div className="message bot" aria-label="Assistant is typing">
+            <div className="avatar" aria-hidden="true">
               <Bot size={24} />
             </div>
             <div className="message-content typing-indicator">
-              <div className="dot"></div>
-              <div className="dot"></div>
-              <div className="dot"></div>
+              <Loader2 className="animate-spin" size={20} />
+              <span style={{ fontSize: '0.85rem', marginLeft: '8px', color: 'var(--text-secondary)' }}>
+                Thinking...
+              </span>
             </div>
           </div>
         )}
@@ -120,27 +140,43 @@ function ChatBotView({ currentLanguage, currentMode }) {
       </div>
 
       <div className="input-area">
-        <div className="quick-actions">
-          {QUICK_ACTIONS.map((action, i) => (
-            <button 
-              key={i} 
-              className="action-btn"
-              onClick={() => setInput(action)}
-            >
-              {action}
-            </button>
+        <div className="quick-actions" role="group" aria-label="Suggested questions">
+          {QUICK_CHAT_ACTIONS.map((action, i) => (
+            <QuickActionButton key={i} action={action} onSelect={handleQuickAction} />
           ))}
         </div>
         <form className="input-form" onSubmit={handleSend}>
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={`Ask in ${currentLanguage}...`}
-            disabled={isTyping}
-          />
-          <button type="submit" className="send-btn" disabled={!input.trim() || isTyping}>
-            <Send size={20} />
+          <div style={{ flex: 1, position: 'relative' }}>
+            <input
+              type="text"
+              value={input}
+              onChange={handleInputChange}
+              placeholder={`Ask in ${currentLanguage}... (${MAX_CHARS} char limit)`}
+              disabled={isTyping}
+              aria-label="Your question"
+              maxLength={MAX_CHARS}
+            />
+            <span
+              style={{
+                position: 'absolute',
+                right: '10px',
+                bottom: '-18px',
+                fontSize: '0.75rem',
+                color: charCount > MAX_CHARS * 0.8 ? 'var(--error)' : 'var(--text-secondary)',
+              }}
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              {charCount}/{MAX_CHARS}
+            </span>
+          </div>
+          <button
+            type="submit"
+            className="send-btn"
+            disabled={!input.trim() || isTyping}
+            aria-label="Send message"
+          >
+            {isTyping ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
           </button>
         </form>
       </div>
@@ -148,4 +184,4 @@ function ChatBotView({ currentLanguage, currentMode }) {
   );
 }
 
-export default ChatBotView;
+export default memo(ChatBotView);

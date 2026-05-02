@@ -3,24 +3,60 @@
 <h1>🗳️ VoteWise AI</h1>
 <h3>AI-Powered Indian Election Learning Platform 🇮🇳</h3>
 
+<p align="center">
+  <a href="https://vote-wise-ai-158446026429.us-central1.run.app">
+    <img src="https://img.shields.io/badge/🚀_Demo_Project-2563EB?style=for-the-badge&logoColor=white" alt="Demo Project" />
+  </a>
+  &nbsp;&nbsp;
+  <a href="https://github.com/vikasgupta37/votewise-ai">
+    <img src="https://img.shields.io/badge/📂_Repo_Link-181717?style=for-the-badge&logo=github&logoColor=white" alt="Repo Link" />
+  </a>
+</p>
+
 <p>
   VoteWise AI is an interactive civic education platform designed to help users understand the Indian election system in a simple, engaging, and educational way.<br/>
   The platform combines AI-powered conversations, quizzes, flashcards, polling simulations, and multilingual support to improve election literacy and democratic awareness in India.
 </p>
 
-<br />
-
-<p align="center">
-  <a href="#">
-    <img src="https://img.shields.io/badge/🚀_Live_Demo-2563EB?style=for-the-badge&logoColor=white" alt="Live Demo" />
-  </a>
-  &nbsp;&nbsp;
-  <a href="https://github.com/vikasgupta37/votewise-ai">
-    <img src="https://img.shields.io/badge/📂_View_Project-181717?style=for-the-badge&logo=github&logoColor=white" alt="View Project" />
-  </a>
-</p>
-
 </div>
+
+---
+
+# 📖 About the Project
+
+**VoteWise AI** is a comprehensive, gamified civic education platform tailored for the Indian democratic landscape. It bridges the gap between complex constitutional laws and citizen understanding by providing an interactive, AI-driven learning experience. 
+
+Whether you're a first-time voter curious about the polling process or a student preparing for competitive exams, VoteWise AI offers personalized learning paths to master Indian electoral literacy. Our mission is to democratize election education through technology, making it accessible, engaging, and politically neutral.
+
+## 🗺️ Platform Workflow
+
+Below is a high-level visualization of how the platform delivers educational value through its various modules:
+
+```mermaid
+graph TD
+    User([User Visitor]) --> Dashboard{VoteWise AI Hub}
+    
+    Dashboard --> AI[🤖 AI Civic Assistant]
+    Dashboard --> Quiz[🧠 Interactive Quizzes]
+    Dashboard --> Sim[🗳️ Polling Simulation]
+    Dashboard --> FC[🃏 Flashcards & Myths]
+    
+    AI --> Gemini[Gemini AI Engine]
+    Gemini --> Knowledge[(Electoral Knowledge Base)]
+    
+    Quiz --> Progress[XP & Achievement Tracking]
+    Sim --> StepByStep[Step-by-Step Voting Workflow]
+    
+    subgraph Knowledge_Domains
+        Knowledge --- C1[Constitutional Articles]
+        Knowledge --- C2[EVM & VVPAT Workflow]
+        Knowledge --- C3[Representation of People Act]
+    end
+    
+    style User fill:#f9f,stroke:#333,stroke-width:2px
+    style Dashboard fill:#2563EB,color:#fff,stroke:#333,stroke-width:2px
+    style Gemini fill:#fff,stroke:#2563EB,stroke-width:2px
+```
 
 ---
 
@@ -102,17 +138,18 @@ Choose how you want to learn:
 
 ## Frontend
 
-* HTML
-* CSS
-* JavaScript
+* HTML5 (Semantic)
+* CSS3 (Glassmorphism, Dark Mode)
+* JavaScript (ES6+, React 19)
+* **Google Gemini API** (AI Civic Assistant)
+* **Vitest** (Automated Testing)
 
 ## Future Enhancements
 
 * React / Next.js
-* Firebase
-* Gemini API / OpenAI API
-* Progressive Web App (PWA)
+* Firebase (Persistence & Auth)
 * Voice assistant support
+* Real-time Election Result API Integration
 
 ---
 
@@ -122,12 +159,10 @@ Planned improvements:
 
 * Dark mode
 * Advanced polling simulations
-* Gamification badges
+* Gamification badges & Leaderboards
 * AI-generated mock tests
 * Daily civic facts
 * Mobile app version
-* Leaderboards
-* Accessibility improvements
 
 ---
 

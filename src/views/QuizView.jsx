@@ -1,85 +1,128 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, memo, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Award, Zap } from 'lucide-react';
+import { Award, Zap, CheckCircle, XCircle } from 'lucide-react';
+import { QUIZ_QUESTIONS } from '../constants';
 
-const QUIZ_QUESTIONS = [
-  {
-    id: 1,
-    difficulty: "Beginner",
-    question: "Who appoints the Chief Election Commissioner of India?",
-    options: ["Prime Minister", "President of India", "Chief Justice of India", "Parliament"],
-    correctAnswer: 1,
-    explanation: "Under Article 324 of the Constitution, the President appoints the CEC and other Election Commissioners.",
-    wrongExplanation: "While the Parliament passes laws and PM advises, the formal appointment is strictly done by the President of India."
-  },
-  {
-    id: 2,
-    difficulty: "Intermediate",
-    question: "Which Constitutional Amendment lowered the voting age from 21 to 18?",
-    options: ["42nd Amendment", "44th Amendment", "61st Amendment", "73rd Amendment"],
-    correctAnswer: 2,
-    explanation: "The 61st Amendment Act of 1988 lowered the voting age from 21 to 18 years for Lok Sabha and Assembly elections.",
-    wrongExplanation: "The 42nd is the 'Mini Constitution', 44th reversed it, and 73rd is Panchayati Raj. The 61st deals specifically with voting age."
-  },
-  {
-    id: 3,
-    difficulty: "UPSC Exam Mode",
-    question: "According to the Anti-Defection Law (10th Schedule), who decides questions of disqualification of a member of Parliament?",
-    options: ["Election Commission", "President", "Supreme Court", "Presiding Officer of the House"],
-    correctAnswer: 3,
-    explanation: "The 52nd Amendment (1985) states that the Chairman or the Speaker of the House makes the final decision on disqualification due to defection.",
-    wrongExplanation: "The Election Commission advises the President on general disqualifications, but defection specifically is decided by the Speaker/Chairman."
-  }
-];
+// Memoized option button
+const OptionButton = memo(({ opt, index, isAnswered, isCorrect, isSelected, onAnswer }) => {
+  const getStyle = () => {
+    const base = {
+      padding: '15px',
+      borderRadius: '8px',
+      border: '2px solid var(--border-color)',
+      background: 'var(--bg-color)',
+      color: 'var(--text-primary)',
+      textAlign: 'left',
+      cursor: isAnswered ? 'default' : 'pointer',
+      transition: 'all 0.2s',
+      fontWeight: '500',
+      width: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
+    };
+    if (isAnswered && isCorrect) {
+      return { ...base, background: 'var(--success)', color: 'white', borderColor: 'var(--success)' };
+    }
+    if (isAnswered && isSelected && !isCorrect) {
+      return { ...base, background: 'var(--error)', color: 'white', borderColor: 'var(--error)' };
+    }
+    return base;
+  };
+
+  return (
+    <button
+      style={getStyle()}
+      onClick={() => onAnswer(index)}
+      disabled={isAnswered}
+      aria-pressed={isSelected}
+      aria-label={`Option ${index + 1}: ${opt}`}
+    >
+      {isAnswered && isCorrect && <CheckCircle size={18} aria-hidden="true" />}
+      {isAnswered && isSelected && !isCorrect && <XCircle size={18} aria-hidden="true" />}
+      {opt}
+    </button>
+  );
+});
+OptionButton.displayName = 'OptionButton';
 
 function QuizView({ addXP }) {
   const [currentQIndex, setCurrentQIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [streak, setStreak] = useState(0);
-  
-  const question = QUIZ_QUESTIONS[currentQIndex];
+  const [score, setScore] = useState(0);
 
-  const handleAnswer = (index) => {
+  const question = useMemo(() => QUIZ_QUESTIONS[currentQIndex], [currentQIndex]);
+
+  const handleAnswer = useCallback((index) => {
     if (isAnswered) return;
-    
     setSelectedAnswer(index);
     setIsAnswered(true);
-    
     if (index === question.correctAnswer) {
+      const xpEarned = 10 + streak * 5;
       setStreak(s => s + 1);
-      // Base XP + Streak Bonus
-      addXP(10 + (streak * 5)); 
+      setScore(s => s + xpEarned);
+      addXP(xpEarned);
     } else {
       setStreak(0);
     }
-  };
+  }, [isAnswered, question.correctAnswer, streak, addXP]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     setSelectedAnswer(null);
     setIsAnswered(false);
-    setCurrentQIndex((prev) => (prev + 1) % QUIZ_QUESTIONS.length);
-  };
+    setCurrentQIndex(prev => (prev + 1) % QUIZ_QUESTIONS.length);
+  }, []);
 
   return (
-    <motion.div 
+    <motion.div
       className="view-container"
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
       style={{ padding: '20px', maxWidth: '600px', margin: '0 auto' }}
+      role="main"
+      aria-label="Quiz Mode"
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h2>Quiz Master</h2>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <div className="stats-badge">
-            <Zap size={16} color="var(--secondary)" />
+          <div className="stats-badge" aria-label={`Current streak: ${streak}`}>
+            <Zap size={16} color="var(--secondary)" aria-hidden="true" />
             Streak: {streak}
           </div>
           <div className="stats-badge" style={{ backgroundColor: 'var(--bg-color)', color: 'var(--text-primary)' }}>
             {question.difficulty}
           </div>
+          <div className="stats-badge" aria-label={`Score: ${score} points`}>
+            <Award size={16} aria-hidden="true" /> {score} pts
+          </div>
         </div>
+      </div>
+
+      {/* Progress indicator */}
+      <div
+        style={{ display: 'flex', gap: '4px', marginBottom: '15px' }}
+        role="progressbar"
+        aria-valuenow={currentQIndex + 1}
+        aria-valuemin={1}
+        aria-valuemax={QUIZ_QUESTIONS.length}
+        aria-label={`Question ${currentQIndex + 1} of ${QUIZ_QUESTIONS.length}`}
+      >
+        {QUIZ_QUESTIONS.map((_, i) => (
+          <div
+            key={i}
+            aria-hidden="true"
+            style={{
+              flex: 1,
+              height: '4px',
+              borderRadius: '2px',
+              background: i <= currentQIndex ? 'var(--primary)' : 'var(--border-color)',
+              transition: 'background 0.3s',
+            }}
+          />
+        ))}
       </div>
 
       <AnimatePresence mode="wait">
@@ -88,67 +131,66 @@ function QuizView({ addXP }) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
+          role="region"
+          aria-labelledby="quiz-question"
           style={{ background: 'var(--surface-color)', padding: '25px', borderRadius: '12px', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-color)' }}
         >
-          <h3 style={{ marginBottom: '20px', fontSize: '1.2rem' }}>{question.question}</h3>
-          
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+            Question {currentQIndex + 1} of {QUIZ_QUESTIONS.length}
+          </p>
+          <h3 id="quiz-question" style={{ marginBottom: '20px', fontSize: '1.2rem' }}>{question.question}</h3>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {question.options.map((opt, index) => {
-              let btnStyle = {
-                padding: '15px',
-                borderRadius: '8px',
-                border: '2px solid var(--border-color)',
-                background: 'var(--bg-color)',
-                color: 'var(--text-primary)',
-                textAlign: 'left',
-                cursor: isAnswered ? 'default' : 'pointer',
-                transition: 'all 0.2s',
-                fontWeight: '500'
-              };
-
-              if (isAnswered) {
-                if (index === question.correctAnswer) {
-                  btnStyle.background = 'var(--success)';
-                  btnStyle.color = 'white';
-                  btnStyle.borderColor = 'var(--success)';
-                } else if (index === selectedAnswer) {
-                  btnStyle.background = 'var(--error)';
-                  btnStyle.color = 'white';
-                  btnStyle.borderColor = 'var(--error)';
-                }
-              }
-
-              return (
-                <button 
-                  key={index} 
-                  style={btnStyle}
-                  onClick={() => handleAnswer(index)}
-                  disabled={isAnswered}
-                >
-                  {opt}
-                </button>
-              );
-            })}
+            {question.options.map((opt, index) => (
+              <OptionButton
+                key={index}
+                opt={opt}
+                index={index}
+                isAnswered={isAnswered}
+                isCorrect={index === question.correctAnswer}
+                isSelected={index === selectedAnswer}
+                onAnswer={handleAnswer}
+              />
+            ))}
           </div>
 
           {isAnswered && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
-              style={{ marginTop: '20px', padding: '15px', borderRadius: '8px', background: 'var(--bg-color)', borderLeft: `4px solid ${selectedAnswer === question.correctAnswer ? 'var(--success)' : 'var(--error)'}` }}
+              role="alert"
+              aria-live="assertive"
+              style={{
+                marginTop: '20px',
+                padding: '15px',
+                borderRadius: '8px',
+                background: 'var(--bg-color)',
+                borderLeft: `4px solid ${selectedAnswer === question.correctAnswer ? 'var(--success)' : 'var(--error)'}`,
+              }}
             >
               <h4 style={{ color: selectedAnswer === question.correctAnswer ? 'var(--success)' : 'var(--error)', marginBottom: '8px' }}>
-                {selectedAnswer === question.correctAnswer ? 'Correct!' : 'Incorrect'}
+                {selectedAnswer === question.correctAnswer
+                  ? `✅ Correct! +${10 + (streak - 1) * 5} XP`
+                  : '❌ Incorrect'}
               </h4>
               <p style={{ fontSize: '0.95rem' }}>
                 {selectedAnswer === question.correctAnswer ? question.explanation : question.wrongExplanation}
               </p>
-              
-              <button 
+              <button
                 onClick={handleNext}
-                style={{ marginTop: '15px', padding: '10px 20px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
+                aria-label="Proceed to next question"
+                style={{
+                  marginTop: '15px',
+                  padding: '10px 20px',
+                  background: 'var(--primary)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                }}
               >
-                Next Question
+                Next Question →
               </button>
             </motion.div>
           )}
@@ -158,4 +200,4 @@ function QuizView({ addXP }) {
   );
 }
 
-export default QuizView;
+export default memo(QuizView);
