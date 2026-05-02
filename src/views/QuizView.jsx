@@ -1,4 +1,5 @@
 import React, { useState, useCallback, memo, useMemo } from 'react';
+import PropTypes from 'prop-types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Award, Zap, CheckCircle, XCircle } from 'lucide-react';
 import { QUIZ_QUESTIONS } from '../constants';
@@ -199,5 +200,9 @@ function QuizView({ addXP }) {
     </motion.div>
   );
 }
+
+QuizView.propTypes = {
+  addXP: PropTypes.func.isRequired,
+};
 
 export default memo(QuizView);

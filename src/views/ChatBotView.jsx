@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
+import PropTypes from 'prop-types';
 import { Send, Bot, User, Loader2 } from 'lucide-react';
 import '../components/Chat.css';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -183,5 +184,10 @@ function ChatBotView({ currentLanguage, currentMode }) {
     </motion.div>
   );
 }
+
+ChatBotView.propTypes = {
+  currentLanguage: PropTypes.string.isRequired,
+  currentMode: PropTypes.string.isRequired,
+};
 
 export default memo(ChatBotView);

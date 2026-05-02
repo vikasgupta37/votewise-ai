@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, ChevronRight, UserCheck, Inbox, ShieldCheck } from 'lucide-react';
 
@@ -167,5 +168,9 @@ function SimulationView({ addXP }) {
     </motion.div>
   );
 }
+
+SimulationView.propTypes = {
+  addXP: PropTypes.func.isRequired,
+};
 
 export default SimulationView;
